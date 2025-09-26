@@ -448,9 +448,9 @@
 
         try {
           const [tickerRes, fundingRes] = await Promise.all([
-  fetch("https://your-proxy-service.onrender.com/api/ticker"),
-  fetch("https://your-proxy-service.onrender.com/api/funding")
-]);
+            fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'),
+            fetch('https://fapi.binance.com/fapi/v1/premiumIndex')
+          ]);
 
           if(!tickerRes.ok || !fundingRes.ok){
             throw new Error('Failed to fetch from Binance APIs');
