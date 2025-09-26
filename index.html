@@ -507,6 +507,9 @@
         lastUpdatedEl.textContent = toLocalTime();
         snapshotTime.textContent = new Date().toLocaleString();
 
+        const apiHealthEl = document.getElementById("apiHealth");
+const apiMessageEl = document.getElementById("apiMessage");
+
         try {
           const [tickerRes, fundingRes] = await Promise.all([
             fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'),
