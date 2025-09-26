@@ -448,8 +448,8 @@
 
         try {
           const [tickerRes, fundingRes] = await Promise.all([
-            fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'),
-            fetch('https://fapi.binance.com/fapi/v1/premiumIndex')
+  fetch('/api/ticker'),   // Proxy route for 24hr ticker
+  fetch('/api/funding')   // Proxy route for funding rates
           ]);
 
           if(!tickerRes.ok || !fundingRes.ok){
