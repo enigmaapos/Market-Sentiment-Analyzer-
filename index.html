@@ -1,322 +1,117 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Binance USDT Perpetual Tracker</title>
-  <meta name="description" content="Simple tracker UI for Binance USDT Perpetual market summary. Ready to deploy on GitHub / Vercel." />
   <style>
-    :root {
-      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4; --success:#10b981; --danger:#ef4444;
-      --glass: rgba(255,255,255,0.04); --glass-2: rgba(255,255,255,0.02); --glass-3: rgba(255,255,255,0.06);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-    }
-    * { box-sizing:border-box; }
-    html, body { height:100%; margin:0; padding:0; }
-    body {
-      background:linear-gradient(180deg,#071029 0%, #071424 100%);
-      color:#e6eef6;
-      padding:16px;
-    }
-    .container { width:100%; max-width:980px; margin:0 auto; }
-
-    header {
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:18px;
-    }
-    .brand { display:flex; gap:12px; align-items:center; flex:1; min-width:250px; }
-    .logo {
-      width:48px; height:48px; border-radius:10px;
-      background:linear-gradient(135deg,var(--accent),#3b82f6);
-      display:grid; place-items:center;
-      font-weight:700;
-    }
-    h1 { font-size:18px; margin:0; }
-    .updated { font-size:13px; color:var(--muted); }
-
-    .grid { display:grid; grid-template-columns:1fr 300px; gap:16px; }
-
-    .card {
-      background:linear-gradient(180deg,var(--card), rgba(6,7,11,0.2));
-      padding:16px;
-      border-radius:12px;
-      box-shadow:0 6px 18px rgba(2,6,23,0.6);
-    }
-    .summary { display:flex; gap:12px; flex-wrap:wrap; }
-    .stat {
-      flex:1; min-width:150px; padding:12px; border-radius:10px; background:var(--glass);
-    }
-    .stat h3 { margin:0; font-size:13px; color:var(--muted); }
-    .stat p { margin:8px 0 0; font-size:20px; font-weight:700; }
-
-    .list { display:flex; flex-direction:column; gap:8px; }
-    .list .row {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:10px; border-radius:8px; background:var(--glass-2);
-    }
-    .row small { color:var(--muted); }
-
-    .big { font-size:34px; font-weight:800; }
-
-    .bar { height:10px; border-radius:6px; background:var(--glass-3); overflow:hidden; }
-    .bar > i { display:block; height:100%; }
-
-    .green i { width:0; background:linear-gradient(90deg,var(--success),#22c55e); }
-    .red i { width:0; background:linear-gradient(90deg,var(--danger),#f97316); }
-
-    .rightcol { display:flex; flex-direction:column; gap:12px; }
-    .card small { color:var(--muted); }
-    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .btn {
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.06);
-      padding:8px 12px;
-      border-radius:8px;
-      color:var(--muted);
-      cursor:pointer;
-      font-size:14px;
-    }
-    .btn.primary {
-      border-color:transparent;
-      background:linear-gradient(90deg,var(--accent),#7c3aed);
-      color:#041024;
-    }
-
-    footer {
-      margin-top:20px;
-      color:var(--muted);
-      font-size:13px;
-      text-align:center;
-    }
-
-    /* responsive */
-    @media (max-width:880px) {
-      .grid { grid-template-columns:1fr; }
-      .rightcol { flex-direction:row; gap:10px; overflow:auto; }
-      header { flex-direction:column; align-items:flex-start; text-align:left; }
-    }
-
-    /* utility */
-    .pill {
-      display:inline-flex;
-      padding:6px 10px;
-      border-radius:999px;
-      font-weight:700;
-    }
-    .pill.green { background:rgba(16,185,129,0.12); color:var(--success); }
-    .pill.red { background:rgba(239,68,68,0.08); color:var(--danger); }
-    .muted { color:var(--muted); }
-    pre {
-      white-space:pre-wrap;
-      background:rgba(255,255,255,0.02);
-      padding:10px;
-      border-radius:8px;
-      color:var(--muted);
-      font-size:13px;
-      max-height:200px;
-      overflow:auto;
-    }
+    body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; }
+    h1 { text-align:center; margin-bottom:10px; }
+    .card { background:#1e293b; padding:15px; border-radius:10px; margin:10px 0; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; }
+    .green { color:lime; font-weight:bold; }
+    .red { color:#f87171; font-weight:bold; }
+    footer { text-align:center; font-size:0.85em; margin-top:20px; opacity:0.7; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo">USDT</div>
-        <div>
-          <h1>Binance USDT Perpetual Tracker</h1>
-          <div class="updated" id="lastUpdated">Last Updated (Davao City): 10:44:40 AM</div>
-        </div>
-      </div>
-      <div style="text-align:right; min-width:200px;">
-        <div class="muted">Deploy-ready static page</div>
-        <div style="margin-top:6px"><small class="muted">Works with GitHub Pages & Vercel</small></div>
-      </div>
-    </header>
+  <h1>📊 Binance USDT Perpetual Tracker</h1>
+  <p><strong>Last Updated (Davao City):</strong> <span id="lastUpdated">--:--:--</span></p>
 
-    <div class="grid">
-      <main class="card">
-        <section style="margin-bottom:12px">
-          <h2 style="margin:0 0 8px">📊 Market Summary</h2>
-          <div class="muted" style="margin-bottom:10px">General market snapshot for Binance USDT perpetual pairs.</div>
-          <div class="summary">
-            <div class="stat">
-              <h3>General Market Bias</h3>
-              <p class="big"><span id="greenCount">50</span> <span style="color:var(--muted);font-weight:600">Green</span> / <span id="redCount">492</span> <span style="color:var(--muted);font-weight:600">Red</span></p>
-            </div>
-            <div class="stat">
-              <h3>24h Price Change</h3>
-              <p style="font-weight:700"><span id="up5">25</span> ▲ / <span id="mid5">281</span> ▬ / <span id="down5">236</span> ▼</p>
-              <small class="muted">(Price Increase ≥5% / ±0–5% / Drop ≤-5%)</small>
-            </div>
-            <div class="stat">
-              <h3>Funding Snapshot</h3>
-              <p style="font-weight:700">Bullish: <span id="bullGreenPos">44</span> | <span id="bullGreenNeg">6</span></p>
-              <p style="font-weight:700">Bearish: <span id="bearRedPos">404</span> | <span id="bearRedNeg">88</span></p>
-            </div>
-          </div>
-        </section>
-
-        <section style="margin-top:14px">
-          <h3 style="margin:0 0 8px">Quick Breakdown</h3>
-          <div class="list">
-            <div class="row"><div><strong>Green</strong> pairs</div><div><span class="pill green" id="pillGreen">50</span></div></div>
-            <div class="row"><div><strong>Red</strong> pairs</div><div><span class="pill red" id="pillRed">492</span></div></div>
-            <div class="row"><div><small class="muted">Price Increase (≥ 5%)</small></div><div><strong id="tUp">25</strong></div></div>
-            <div class="row"><div><small class="muted">Mild Movement (±0–5%)</small></div><div><strong id="tMid">281</strong></div></div>
-            <div class="row"><div><small class="muted">Price Drop (≤ -5%)</small></div><div><strong id="tDown">236</strong></div></div>
-          </div>
-        </section>
-
-        <section style="margin-top:14px">
-          <h3 style="margin:0 0 8px">Funding Details</h3>
-          <div class="list">
-            <div class="row"><div>Green + Funding ➕</div><div><strong id="gfp">44</strong></div></div>
-            <div class="row"><div>Green + Funding ➖</div><div><strong id="gfn">6</strong></div></div>
-            <div class="row"><div>Red + Funding ➕</div><div><strong id="rfp">404</strong></div></div>
-            <div class="row"><div>Red + Funding ➖</div><div><strong id="rfn">88</strong></div></div>
-          </div>
-        </section>
-
-        <section style="margin-top:14px">
-          <h3 style="margin:0 0 8px">Raw JSON (editable)</h3>
-          <pre id="jsonData">{
-  "lastUpdated": "Last Updated (Davao City): 10:44:40 AM",
-  "green": 50,
-  "red": 492,
-  "priceIncrease5": 25,
-  "priceMid5": 281,
-  "priceDrop5": 236,
-  "greenFundingPlus": 44,
-  "greenFundingMinus": 6,
-  "redFundingPlus": 404,
-  "redFundingMinus": 88
-}</pre>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <button class="btn" id="copyJSON">Copy JSON</button>
-            <button class="btn primary" id="applyJSON">Apply JSON</button>
-          </div>
-        </section>
-      </main>
-
-      <aside class="rightcol">
-        <div class="card">
-          <h3 style="margin:0 0 8px">At a glance</h3>
-          <small class="muted">Overall sentiment visual</small>
-          <div style="margin-top:10px">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-              <div style="width:8px;height:8px;border-radius:50%;background:var(--success)"></div>
-              <small class="muted">Greens</small>
-              <div style="flex:1;text-align:right"><strong id="gPct">9.27%</strong></div>
-            </div>
-            <div class="bar" style="margin-bottom:10px"><i id="gBar"></i></div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-              <div style="width:8px;height:8px;border-radius:50%;background:var(--danger)"></div>
-              <small class="muted">Reds</small>
-              <div style="flex:1;text-align:right"><strong id="rPct">90.73%</strong></div>
-            </div>
-            <div class="bar"><i id="rBar"></i></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="margin:0 0 8px">Quick actions</h3>
-          <div class="controls">
-            <button class="btn" id="downloadBtn">Download JSON</button>
-            <button class="btn" id="resetBtn">Reset to Provided</button>
-          </div>
-          <div style="margin-top:10px;font-size:13px;color:var(--muted)">
-            Tip: edit the JSON above and click <strong>Apply JSON</strong> to update the page.
-          </div>
-        </div>
-      </aside>
-    </div>
-
-    <footer>Made for quick deployment — drop this file into a GitHub repo and deploy on Vercel or GitHub Pages. Want a React or Next.js version?</footer>
+  <div class="card">
+    <h2>🧮 General Market Bias</h2>
+    <p>✅ Green: <span id="green" class="green">0</span> | ❌ Red: <span id="red" class="red">0</span></p>
   </div>
 
+  <div class="card">
+    <h2>🔄 24h Price Change</h2>
+    <div class="grid">
+      <div>📈 Price Increase (≥ 5%): <span id="increase">0</span></div>
+      <div>➖ Mild Movement (±0–5%): <span id="mild">0</span></div>
+      <div>📉 Price Drop (≤ -5%): <span id="drop">0</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Funding Signals</h2>
+    <div class="grid">
+      <div>📈 Bullish Potential (Shorts Paying) ➕: <span id="bullPlus">0</span></div>
+      <div>📈 Bullish Potential ➖: <span id="bullMinus">0</span></div>
+      <div>📉 Bearish Risk (Longs Paying) ➕: <span id="bearPlus">0</span></div>
+      <div>📉 Bearish Risk ➖: <span id="bearMinus">0</span></div>
+    </div>
+  </div>
+
+  <footer>
+    Auto-updates every 60s from Binance Futures API
+  </footer>
+
   <script>
-    const defaultData = {
-      lastUpdated: 'Last Updated (Davao City): 10:44:40 AM',
-      green: 50,
-      red: 492,
-      priceIncrease5: 25,
-      priceMid5: 281,
-      priceDrop5: 236,
-      greenFundingPlus: 44,
-      greenFundingMinus: 6,
-      redFundingPlus: 404,
-      redFundingMinus: 88
-    };
+    async function fetchData() {
+      try {
+        const [tickerRes, fundingRes] = await Promise.all([
+          fetch("https://fapi.binance.com/fapi/v1/ticker/24hr"),
+          fetch("https://fapi.binance.com/fapi/v1/premiumIndex")
+        ]);
+        const tickers = await tickerRes.json();
+        const funding = await fundingRes.json();
 
-    function render(data) {
-      document.getElementById('lastUpdated').textContent = data.lastUpdated;
-      document.getElementById('greenCount').textContent = data.green;
-      document.getElementById('redCount').textContent = data.red;
-      document.getElementById('up5').textContent = data.priceIncrease5;
-      document.getElementById('mid5').textContent = data.priceMid5;
-      document.getElementById('down5').textContent = data.priceDrop5;
-      document.getElementById('pillGreen').textContent = data.green;
-      document.getElementById('pillRed').textContent = data.red;
-      document.getElementById('tUp').textContent = data.priceIncrease5;
-      document.getElementById('tMid').textContent = data.priceMid5;
-      document.getElementById('tDown').textContent = data.priceDrop5;
-      document.getElementById('gfp').textContent = data.greenFundingPlus;
-      document.getElementById('gfn').textContent = data.greenFundingMinus;
-      document.getElementById('rfp').textContent = data.redFundingPlus;
-      document.getElementById('rfn').textContent = data.redFundingMinus;
+        // Filter USDT perpetual pairs only
+        const usdtTickers = tickers.filter(t => t.symbol.endsWith("USDT"));
+        const usdtFunding = funding.filter(f => f.symbol.endsWith("USDT"));
 
-      const total = (data.green || 0) + (data.red || 0);
-      const gPct = total ? ((data.green/total)*100).toFixed(2) : '0.00';
-      const rPct = total ? ((data.red/total)*100).toFixed(2) : '0.00';
-      document.getElementById('gPct').textContent = gPct + '%';
-      document.getElementById('rPct').textContent = rPct + '%';
+        // Counters
+        let green = 0, red = 0;
+        let increase = 0, mild = 0, drop = 0;
+        let bullPlus = 0, bullMinus = 0;
+        let bearPlus = 0, bearMinus = 0;
 
-      const gBar = document.getElementById('gBar');
-      const rBar = document.getElementById('rBar');
-      if(gBar) gBar.style.width = gPct + '%';
-      if(rBar) rBar.style.width = rPct + '%';
+        // Market summary
+        usdtTickers.forEach(t => {
+          const change = parseFloat(t.priceChangePercent);
+          if (change > 0) green++; else if (change < 0) red++;
+          if (change >= 5) increase++;
+          else if (change <= -5) drop++;
+          else mild++;
+        });
 
-      document.getElementById('jsonData').textContent = JSON.stringify(data, null, 2);
+        // Funding analysis
+        usdtFunding.forEach(f => {
+          const rate = parseFloat(f.lastFundingRate);
+          const symbol = f.symbol;
+          const change = parseFloat(
+            usdtTickers.find(t => t.symbol === symbol)?.priceChangePercent || 0
+          );
+
+          if (rate < 0) {
+            // Shorts pay longs → Bullish potential
+            if (change > 0) bullPlus++; else bullMinus++;
+          } else if (rate > 0) {
+            // Longs pay shorts → Bearish risk
+            if (change < 0) bearPlus++; else bearMinus++;
+          }
+        });
+
+        // Update DOM
+        document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString("en-PH", { hour12: true });
+        document.getElementById("green").innerText = green;
+        document.getElementById("red").innerText = red;
+        document.getElementById("increase").innerText = increase;
+        document.getElementById("mild").innerText = mild;
+        document.getElementById("drop").innerText = drop;
+        document.getElementById("bullPlus").innerText = bullPlus;
+        document.getElementById("bullMinus").innerText = bullMinus;
+        document.getElementById("bearPlus").innerText = bearPlus;
+        document.getElementById("bearMinus").innerText = bearMinus;
+
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
     }
 
-    render(defaultData);
-
-    document.getElementById('copyJSON').addEventListener('click', () => {
-      const txt = document.getElementById('jsonData').textContent;
-      navigator.clipboard?.writeText(txt).then(() => {
-        alert('JSON copied to clipboard');
-      }, () => alert('Copy failed'));
-    });
-
-    document.getElementById('applyJSON').addEventListener('click', () => {
-      try {
-        const raw = document.getElementById('jsonData').textContent;
-        const parsed = JSON.parse(raw);
-        const data = { ...defaultData, ...parsed };
-        render(data);
-      } catch (e) {
-        alert('Invalid JSON: ' + e.message);
-      }
-    });
-
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      const txt = document.getElementById('jsonData').textContent;
-      const blob = new Blob([txt], { type:'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'tracker.json';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      render(defaultData);
-    });
+    // Initial fetch + refresh every 60s
+    fetchData();
+    setInterval(fetchData, 60000);
   </script>
 </body>
 </html>
