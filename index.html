@@ -1,121 +1,261 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Market Sentiment App</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React + ReactDOM CDN -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Recharts CDN -->
-  <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Binance USDT Perpetual Tracker</title>
+  <meta name="description" content="Simple tracker UI for Binance USDT Perpetual market summary. Ready to deploy on GitHub / Vercel." />
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4; --success:#10b981; --danger:#ef4444; --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02); --glass-3: rgba(255,255,255,0.06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#071029 0%, #071424 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;padding:28px}
+    .container{width:100%;max-width:980px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#3b82f6);display:grid;place-items:center;font-weight:700}
+    h1{font-size:18px;margin:0}
+    .updated{font-size:13px;color:var(--muted)}.grid{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.card{background:linear-gradient(180deg,var(--card), rgba(6,7,11,0.2));padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
+.summary{display:flex;gap:12px;flex-wrap:wrap}
+.stat{flex:1;min-width:150px;padding:12px;border-radius:10px;background:var(--glass)}
+.stat h3{margin:0;font-size:13px;color:var(--muted)}
+.stat p{margin:8px 0 0;font-size:20px;font-weight:700}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.list .row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:var(--glass-2)}
+.row small{color:var(--muted)}
+
+.big{font-size:34px;font-weight:800}
+
+.bar{height:10px;border-radius:6px;background:var(--glass-3);overflow:hidden}
+.bar > i{display:block;height:100%}
+
+.green{i{width:0;background:linear-gradient(90deg,var(--success),#22c55e)}}
+.red{i{width:0;background:linear-gradient(90deg,var(--danger),#f97316)}}
+
+.rightcol{display:flex;flex-direction:column;gap:12px}
+.card small{color:var(--muted)}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+.btn.primary{border-color:transparent;background:linear-gradient(90deg,var(--accent),#7c3aed);color:#041024}
+
+footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
+
+/* responsive */
+@media (max-width:880px){
+  .grid{grid-template-columns:1fr;}
+  .rightcol{flex-direction:row;gap:10px;overflow:auto}
+}
+
+/* utility */
+.pill{display:inline-flex;padding:6px 10px;border-radius:999px;font-weight:700}
+.pill.green{background:rgba(16,185,129,0.12);color:var(--success)}
+.pill.red{background:rgba(239,68,68,0.08);color:var(--danger)}
+.muted{color:var(--muted)}
+pre{white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;color:var(--muted);font-size:13px}
+
+  </style>
 </head>
-<body class="bg-gray-900 text-white">
-  <div id="root" class="p-4"></div>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">USDT</div>
+        <div>
+          <h1>Binance USDT Perpetual Tracker</h1>
+          <div class="updated" id="lastUpdated">Last Updated (Davao City): 10:44:40 AM</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="muted">Deploy-ready static page</div>
+        <div style="margin-top:6px"><small class="muted">Works with GitHub Pages & Vercel</small></div>
+      </div>
+    </header><div class="grid">
+  <main class="card">
+    <section style="margin-bottom:12px">
+      <h2 style="margin:0 0 8px">📊 Market Summary</h2>
+      <div class="muted" style="margin-bottom:10px">General market snapshot for Binance USDT perpetual pairs.</div>
+      <div class="summary">
+        <div class="stat">
+          <h3>General Market Bias</h3>
+          <p class="big"><span id="greenCount">50</span> <span style="color:var(--muted);font-weight:600">Green</span> / <span id="redCount">492</span> <span style="color:var(--muted);font-weight:600">Red</span></p>
+        </div>
+        <div class="stat">
+          <h3>24h Price Change</h3>
+          <p style="font-weight:700"><span id="up5">25</span> ▲ / <span id="mid5">281</span> ▬ / <span id="down5">236</span> ▼</p>
+          <small class="muted">(Price Increase ≥5% / ±0–5% / Drop ≤-5%)</small>
+        </div>
+        <div class="stat">
+          <h3>Funding Snapshot</h3>
+          <p style="font-weight:700">Bullish: <span id="bullGreenPos">44</span> | <span id="bullGreenNeg">6</span></p>
+          <p style="font-weight:700">Bearish: <span id="bearRedPos">404</span> | <span id="bearRedNeg">88</span></p>
+        </div>
+      </div>
+    </section>
 
-  <script>
-    const { useState, useEffect } = React;
-    const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } = Recharts;
+    <section style="margin-top:14px">
+      <h3 style="margin:0 0 8px">Quick Breakdown</h3>
+      <div class="list">
+        <div class="row"><div><strong>Green</strong> pairs</div><div><span class="pill green" id="pillGreen">50</span></div></div>
+        <div class="row"><div><strong>Red</strong> pairs</div><div><span class="pill red" id="pillRed">492</span></div></div>
+        <div class="row"><div><small class="muted">Price Increase (≥ 5%)</small></div><div><strong id="tUp">25</strong></div></div>
+        <div class="row"><div><small class="muted">Mild Movement (±0–5%)</small></div><div><strong id="tMid">281</strong></div></div>
+        <div class="row"><div><small class="muted">Price Drop (≤ -5%)</small></div><div><strong id="tDown">236</strong></div></div>
+      </div>
+    </section>
 
-    // Dummy data for demo
-    const marketAnalysis = {
-      overallMarketOutlook: { score: 7.8, tone: "Bullish", strategySuggestion: "Long-term hold" },
-      generalBias: { score: 6.5, rating: "Good", interpretation: "Positive bias overall" },
-      fundingImbalance: { score: 5.2, rating: "Moderate", interpretation: "Diverging funding rates" },
-      shortSqueezeCandidates: { score: 7.1, rating: "Strong", interpretation: "High short squeeze potential" },
-      longTrapCandidates: { score: 4.5, rating: "Moderate", interpretation: "Possible long trap" },
-      volumeSentiment: { score: 6.0, rating: "Good", interpretation: "High buying volume" },
-      liquidationHeatmap: { score: 3.8, rating: "Weak", interpretation: "Some liquidation risk" },
-      newsSentiment: { score: 6.2, rating: "Good", interpretation: "Mostly positive news", topHeadlines: ["Market rises 5%", "Funding rates spike"] },
-      actionableSentimentSummary: { score: 7.0, bullishCount: 3, bearishCount: 1, interpretation: "Focus on bullish setups" },
+    <section style="margin-top:14px">
+      <h3 style="margin:0 0 8px">Funding Details</h3>
+      <div class="list">
+        <div class="row"><div>Green + Funding ➕</div><div><strong id="gfp">44</strong></div></div>
+        <div class="row"><div>Green + Funding ➖</div><div><strong id="gfn">6</strong></div></div>
+        <div class="row"><div>Red + Funding ➕</div><div><strong id="rfp">404</strong></div></div>
+        <div class="row"><div>Red + Funding ➖</div><div><strong id="rfn">88</strong></div></div>
+      </div>
+    </section>
+
+    <section style="margin-top:14px">
+      <h3 style="margin:0 0 8px">Raw JSON (editable)</h3>
+      <pre id="jsonData">{
+
+"lastUpdated": "Last Updated (Davao City): 10:44:40 AM", "green": 50, "red": 492, "priceIncrease5": 25, "priceMid5": 281, "priceDrop5": 236, "greenFundingPlus": 44, "greenFundingMinus": 6, "redFundingPlus": 404, "redFundingMinus": 88 }</pre> <div style="display:flex;gap:8px;margin-top:8px"> <button class="btn" id="copyJSON">Copy JSON</button> <button class="btn primary" id="applyJSON">Apply JSON</button> </div> </section> </main>
+
+<aside class="rightcol">
+    <div class="card">
+      <h3 style="margin:0 0 8px">At a glance</h3>
+      <small class="muted">Overall sentiment visual</small>
+      <div style="margin-top:10px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--success)"></div><small class="muted">Greens</small><div style="flex:1;text-align:right"><strong id="gPct">9.27%</strong></div></div>
+        <div class="bar" style="margin-bottom:10px"><i id="gBar" style="width:0;background:linear-gradient(90deg,var(--success),#34d399)}"></i></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--danger)"></div><small class="muted">Reds</small><div style="flex:1;text-align:right"><strong id="rPct">90.73%</strong></div></div>
+        <div class="bar"><i id="rBar" style="width:0;background:linear-gradient(90deg,var(--danger),#fb923c)}"></i></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 8px">Quick actions</h3>
+      <div class="controls">
+        <button class="btn" id="downloadBtn">Download JSON</button>
+        <button class="btn" id="resetBtn">Reset to Provided</button>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--muted)">Tip: edit the JSON above and click <strong>Apply JSON</strong> to update the page.</div>
+    </div>
+  </aside>
+</div>
+
+<footer>Made for quick deployment — drop this file into a GitHub repo and deploy on Vercel or GitHub Pages. Want a React or Next.js version?</footer>
+
+  </div>  <script>
+    // default data (matches the original user-provided snapshot)
+    const defaultData = {
+      lastUpdated: 'Last Updated (Davao City): 10:44:40 AM',
+      green: 50,
+      red: 492,
+      priceIncrease5: 25,
+      priceMid5: 281,
+      priceDrop5: 236,
+      greenFundingPlus: 44,
+      greenFundingMinus: 6,
+      redFundingPlus: 404,
+      redFundingMinus: 88
     };
 
-    const fundingImbalanceData = {
-      topShortSqueeze: [{ symbol: "BTCUSDT", fundingRate: 0.0005, priceChangePercent: 2.3, volume: 123456789 }],
-      topLongTrap: [{ symbol: "ETHUSDT", fundingRate: -0.0004, priceChangePercent: -1.5, volume: 98765432 }],
-    };
+    function render(data){
+      document.getElementById('lastUpdated').textContent = data.lastUpdated;
+      document.getElementById('greenCount').textContent = data.green;
+      document.getElementById('redCount').textContent = data.red;
+      document.getElementById('up5').textContent = data.priceIncrease5;
+      document.getElementById('mid5').textContent = data.priceMid5;
+      document.getElementById('down5').textContent = data.priceDrop5;
+      document.getElementById('pillGreen').textContent = data.green;
+      document.getElementById('pillRed').textContent = data.red;
+      document.getElementById('tUp').textContent = data.priceIncrease5;
+      document.getElementById('tMid').textContent = data.priceMid5;
+      document.getElementById('tDown').textContent = data.priceDrop5;
 
-    function formatVolume(num) {
-      if (num === 0) return "0";
-      return Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }).format(num);
+      document.getElementById('gfp').textContent = data.greenFundingPlus;
+      document.getElementById('gfn').textContent = data.greenFundingMinus;
+      document.getElementById('rfp').textContent = data.redFundingPlus;
+      document.getElementById('rfn').textContent = data.redFundingMinus;
+
+      // percentages
+      const total = (data.green || 0) + (data.red || 0);
+      const gPct = total ? ((data.green/total)*100).toFixed(2) : '0.00';
+      const rPct = total ? ((data.red/total)*100).toFixed(2) : '0.00';
+      document.getElementById('gPct').textContent = gPct + '%';
+      document.getElementById('rPct').textContent = rPct + '%';
+
+      // bars
+      const gBar = document.getElementById('gBar');
+      const rBar = document.getElementById('rBar');
+      if(gBar) gBar.style.width = gPct + '%';
+      if(rBar) rBar.style.width = rPct + '%';
+
+      // set JSON area
+      document.getElementById('jsonData').textContent = JSON.stringify({
+        lastUpdated: data.lastUpdated,
+        green: data.green,
+        red: data.red,
+        priceIncrease5: data.priceIncrease5,
+        priceMid5: data.priceMid5,
+        priceDrop5: data.priceDrop5,
+        greenFundingPlus: data.greenFundingPlus,
+        greenFundingMinus: data.greenFundingMinus,
+        redFundingPlus: data.redFundingPlus,
+        redFundingMinus: data.redFundingMinus
+      }, null, 2);
     }
 
-    function CustomBarLabel({ x, y, width, height, value }) {
-      const displayY = y - (value < 0 ? height : 0) - 5;
-      let textColor = '#fff';
-      if (value >= 7.5) textColor = '#4ade80';
-      else if (value >= 6) textColor = '#facc15';
-      else if (value >= 4) textColor = '#f97316';
-      else textColor = '#f87171';
-      return React.createElement("text", {
-        x: x + width/2, y: displayY, fill: textColor, textAnchor: "middle", fontSize: 12, fontWeight: "bold"
-      }, value.toFixed(1));
-    }
+    // initial render
+    render(defaultData);
 
-    function App() {
-      const sentimentScores = [
-        { name: 'Bias', score: marketAnalysis.generalBias.score },
-        { name: 'Funding', score: marketAnalysis.fundingImbalance.score },
-        { name: 'Squeeze', score: marketAnalysis.shortSqueezeCandidates.score },
-        { name: 'Long Trap', score: marketAnalysis.longTrapCandidates.score },
-        { name: 'Volume', score: marketAnalysis.volumeSentiment.score },
-        { name: 'Liquidation', score: marketAnalysis.liquidationHeatmap.score },
-        { name: 'News', score: marketAnalysis.newsSentiment.score },
-        { name: 'Actionable', score: marketAnalysis.actionableSentimentSummary.score },
-      ];
+    // controls
+    document.getElementById('copyJSON').addEventListener('click', ()=>{
+      const txt = document.getElementById('jsonData').textContent;
+      navigator.clipboard?.writeText(txt).then(()=>{
+        alert('JSON copied to clipboard');
+      }, ()=>alert('Copy failed'));
+    });
 
-      const getScoreColor = score => {
-        if (score >= 7.5) return "text-green-400";
-        if (score >= 6) return "text-yellow-400";
-        if (score >= 4) return "text-orange-400";
-        return "text-red-400";
-      };
+    document.getElementById('applyJSON').addEventListener('click', ()=>{
+      try{
+        const raw = document.getElementById('jsonData').textContent;
+        const parsed = JSON.parse(raw);
+        // basic validation and defaults
+        const data = {
+          lastUpdated: parsed.lastUpdated || defaultData.lastUpdated,
+          green: Number(parsed.green)||0,
+          red: Number(parsed.red)||0,
+          priceIncrease5: Number(parsed.priceIncrease5)||0,
+          priceMid5: Number(parsed.priceMid5)||0,
+          priceDrop5: Number(parsed.priceDrop5)||0,
+          greenFundingPlus: Number(parsed.greenFundingPlus)||0,
+          greenFundingMinus: Number(parsed.greenFundingMinus)||0,
+          redFundingPlus: Number(parsed.redFundingPlus)||0,
+          redFundingMinus: Number(parsed.redFundingMinus)||0
+        };
+        render(data);
+      }catch(e){
+        alert('Invalid JSON: ' + e.message);
+      }
+    });
 
-      return React.createElement("div", null,
-        React.createElement("h1", { className: "text-xl font-bold mb-4" }, "🧠 Market Sentiment Analysis"),
-        React.createElement("p", { className: "mb-4" }, 
-          "Overall Market: ",
-          React.createElement("span", { className: getScoreColor(marketAnalysis.overallMarketOutlook.score) }, 
-            `${marketAnalysis.overallMarketOutlook.tone} (${marketAnalysis.overallMarketOutlook.score.toFixed(1)})`
-          )
-        ),
-        React.createElement("div", { style: { width: "100%", height: 300 } },
-          React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
-            React.createElement(BarChart, { data: sentimentScores },
-              React.createElement(XAxis, { dataKey: "name" }),
-              React.createElement(YAxis, { domain: [0, 10] }),
-              React.createElement(Tooltip, null),
-              React.createElement(Bar, { dataKey: "score", label: React.createElement(CustomBarLabel) },
-                sentimentScores.map((entry, index) => React.createElement(Cell, {
-                  key: index,
-                  fill: entry.score >= 7.5 ? "#4ade80" : entry.score >= 6 ? "#facc15" : entry.score >= 4 ? "#f97316" : "#f87171"
-                }))
-              )
-            )
-          )
-        ),
-        React.createElement("div", { className: "mt-4" },
-          React.createElement("h2", { className: "font-semibold" }, "Top Short Squeeze Candidates"),
-          React.createElement("ul", null, fundingImbalanceData.topShortSqueeze.map(d =>
-            React.createElement("li", { key: d.symbol },
-              `${d.symbol} — Funding: ${(d.fundingRate*100).toFixed(4)}%, Change: ${d.priceChangePercent.toFixed(2)}%, Volume: ${formatVolume(d.volume)}`
-            )
-          ))
-        ),
-        React.createElement("div", { className: "mt-4" },
-          React.createElement("h2", { className: "font-semibold" }, "Top Long Trap Candidates"),
-          React.createElement("ul", null, fundingImbalanceData.topLongTrap.map(d =>
-            React.createElement("li", { key: d.symbol },
-              `${d.symbol} — Funding: ${(d.fundingRate*100).toFixed(4)}%, Change: ${d.priceChangePercent.toFixed(2)}%, Volume: ${formatVolume(d.volume)}`
-            )
-          ))
-        )
-      );
-    }
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      const txt = document.getElementById('jsonData').textContent;
+      const blob = new Blob([txt], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'tracker.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
 
-    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
-  </script>
-</body>
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      render(defaultData);
+    });
+
+  </script></body>
 </html>
