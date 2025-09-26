@@ -5,45 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Binance USDT Perpetual Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; }
-    h1 { text-align:center; margin-bottom:10px; }
-    .card { background:#1e293b; padding:15px; border-radius:10px; margin:10px 0; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; }
-    .green { color:lime; font-weight:bold; }
-    .red { color:#f87171; font-weight:bold; }
-    footer { text-align:center; font-size:0.85em; margin-top:20px; opacity:0.7; }
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    h2 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #facc15;
+    }
+    .updated {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      color: #94a3b8;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 16px;
+      margin: 15px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .stat {
+      font-size: 1.1rem;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .green { color: #22c55e; font-weight: 700; }
+    .red { color: #ef4444; font-weight: 700; }
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 25px;
+      color: #94a3b8;
+    }
+    .loading-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-left: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.2; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.2; transform: scale(0.9); }
+    }
   </style>
 </head>
 <body>
   <h1>📊 Binance USDT Perpetual Tracker</h1>
-  <p><strong>Last Updated (Davao City):</strong> <span id="lastUpdated">--:--:--</span></p>
+  <p class="updated">
+    Last Updated (Davao City): <span id="lastUpdated">--:--:--</span>
+    <span class="loading-dot"></span>
+  </p>
 
   <div class="card">
     <h2>🧮 General Market Bias</h2>
-    <p>✅ Green: <span id="green" class="green">0</span> | ❌ Red: <span id="red" class="red">0</span></p>
+    <div class="grid">
+      <div class="stat">✅ Green: <span id="green" class="green">0</span></div>
+      <div class="stat">❌ Red: <span id="red" class="red">0</span></div>
+    </div>
   </div>
 
   <div class="card">
     <h2>🔄 24h Price Change</h2>
     <div class="grid">
-      <div>📈 Price Increase (≥ 5%): <span id="increase">0</span></div>
-      <div>➖ Mild Movement (±0–5%): <span id="mild">0</span></div>
-      <div>📉 Price Drop (≤ -5%): <span id="drop">0</span></div>
+      <div class="stat">📈 ≥ 5% Increase: <span id="increase">0</span></div>
+      <div class="stat">➖ ±0–5% Mild: <span id="mild">0</span></div>
+      <div class="stat">📉 ≤ -5% Drop: <span id="drop">0</span></div>
     </div>
   </div>
 
   <div class="card">
-    <h2>Funding Signals</h2>
+    <h2>⚡ Funding Signals</h2>
     <div class="grid">
-      <div>📈 Bullish Potential (Shorts Paying) ➕: <span id="bullPlus">0</span></div>
-      <div>📈 Bullish Potential ➖: <span id="bullMinus">0</span></div>
-      <div>📉 Bearish Risk (Longs Paying) ➕: <span id="bearPlus">0</span></div>
-      <div>📉 Bearish Risk ➖: <span id="bearMinus">0</span></div>
+      <div class="stat">📈 Bullish ➕: <span id="bullPlus">0</span></div>
+      <div class="stat">📈 Bullish ➖: <span id="bullMinus">0</span></div>
+      <div class="stat">📉 Bearish ➕: <span id="bearPlus">0</span></div>
+      <div class="stat">📉 Bearish ➖: <span id="bearMinus">0</span></div>
     </div>
   </div>
 
   <footer>
-    Auto-updates every 60s from Binance Futures API
+    ⏳ Auto-updates every 60s from Binance Futures API
   </footer>
 
   <script>
@@ -56,17 +128,14 @@
         const tickers = await tickerRes.json();
         const funding = await fundingRes.json();
 
-        // Filter USDT perpetual pairs only
         const usdtTickers = tickers.filter(t => t.symbol.endsWith("USDT"));
         const usdtFunding = funding.filter(f => f.symbol.endsWith("USDT"));
 
-        // Counters
         let green = 0, red = 0;
         let increase = 0, mild = 0, drop = 0;
         let bullPlus = 0, bullMinus = 0;
         let bearPlus = 0, bearMinus = 0;
 
-        // Market summary
         usdtTickers.forEach(t => {
           const change = parseFloat(t.priceChangePercent);
           if (change > 0) green++; else if (change < 0) red++;
@@ -75,25 +144,20 @@
           else mild++;
         });
 
-        // Funding analysis
         usdtFunding.forEach(f => {
           const rate = parseFloat(f.lastFundingRate);
-          const symbol = f.symbol;
           const change = parseFloat(
-            usdtTickers.find(t => t.symbol === symbol)?.priceChangePercent || 0
+            usdtTickers.find(t => t.symbol === f.symbol)?.priceChangePercent || 0
           );
-
           if (rate < 0) {
-            // Shorts pay longs → Bullish potential
             if (change > 0) bullPlus++; else bullMinus++;
           } else if (rate > 0) {
-            // Longs pay shorts → Bearish risk
             if (change < 0) bearPlus++; else bearMinus++;
           }
         });
 
-        // Update DOM
-        document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString("en-PH", { hour12: true });
+        document.getElementById("lastUpdated").innerText =
+          new Date().toLocaleTimeString("en-PH", { hour12: true });
         document.getElementById("green").innerText = green;
         document.getElementById("red").innerText = red;
         document.getElementById("increase").innerText = increase;
@@ -103,13 +167,11 @@
         document.getElementById("bullMinus").innerText = bullMinus;
         document.getElementById("bearPlus").innerText = bearPlus;
         document.getElementById("bearMinus").innerText = bearMinus;
-
       } catch (err) {
         console.error("Error fetching data:", err);
       }
     }
 
-    // Initial fetch + refresh every 60s
     fetchData();
     setInterval(fetchData, 60000);
   </script>
