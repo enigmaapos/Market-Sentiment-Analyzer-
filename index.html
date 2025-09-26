@@ -1,179 +1,567 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Binance USDT Perpetual Tracker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Binance USDT Perpetual Tracker — Professional Dashboard</title>
+  <meta name="description" content="Live Binance USDT Perpetual Tracker — market bias, funding signals, top movers. Auto-updates from Binance Futures API." />
   <style>
-    body {
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #f1f5f9;
-      margin: 0;
-      padding: 20px;
+    /* ===== Colors & Base ===== */
+    :root{
+      --bg-0: #071224;
+      --bg-1: #081727;
+      --card: rgba(255,255,255,0.03);
+      --muted: #9aa8b7;
+      --accent: linear-gradient(90deg,#06b6d4,#7c3aed);
+      --glass: rgba(255,255,255,0.025);
+      --success: #16c784;
+      --danger: #ff6b6b;
+      --info: #60a5fa;
+      --glass-2: rgba(255,255,255,0.02);
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(2,6,23,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 5px;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #38bdf8;
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-0),var(--bg-1));color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    a{color:inherit}
+    .wrap{max-width:1180px;margin:24px auto;padding:20px}
+    header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;gap:12px;align-items:center;min-width:0}
+    .logo{
+      width:56px;height:56px;border-radius:12px;
+      background:linear-gradient(135deg,#06b6d4,#7c3aed);
+      display:grid;place-items:center;font-weight:800;color:#041024;font-size:15px;box-shadow:0 6px 18px rgba(0,0,0,0.4);
     }
-    h2 {
-      margin-bottom: 10px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #facc15;
+    h1{margin:0;font-size:20px;letter-spacing:-0.2px}
+    .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+    .meta{min-width:220px;text-align:right;font-size:13px;color:var(--muted)}
+    .pill {display:inline-flex;padding:6px 10px;border-radius:999px;background:var(--glass);align-items:center;gap:8px}
+    .refresh-dot{width:9px;height:9px;border-radius:50%;background:var(--info);box-shadow:0 0 8px rgba(96,165,250,0.7);display:inline-block;margin-left:8px;vertical-align:middle;animation: pulse 1.2s infinite;}
+    @keyframes pulse{0%{transform:scale(.9);opacity:.4}50%{transform:scale(1.15);opacity:1}100%{transform:scale(.9);opacity:.4}}
+
+    /* ===== Grid ===== */
+    main.grid {display:grid;grid-template-columns: 1fr 380px; gap:18px;align-items:start}
+    .left {display:flex;flex-direction:column;gap:16px}
+    .right {display:flex;flex-direction:column;gap:16px}
+
+    /* ===== Cards ===== */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,0.03);
     }
-    .updated {
-      text-align: center;
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-      color: #94a3b8;
+    .card-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .card-title{font-weight:700;font-size:15px}
+    .card-sub{font-size:13px;color:var(--muted)}
+
+    /* ===== Summary Row ===== */
+    .summary-row{display:flex;gap:12px;flex-wrap:wrap}
+    .summary-stat{
+      flex:1 1 200px; min-width:160px; padding:14px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.02);
     }
-    .card {
-      background: rgba(30, 41, 59, 0.9);
-      border: 1px solid rgba(255,255,255,0.05);
-      padding: 20px;
-      border-radius: 16px;
-      margin: 15px 0;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
+    .stat-value{font-weight:800;font-size:22px;margin-top:6px}
+    .stat-label{font-size:13px;color:var(--muted)}
+
+    /* ===== Distribution bars ===== */
+    .dist {display:flex;flex-direction:column;gap:10px}
+    .dist-row{display:flex;align-items:center;gap:12px}
+    .dist-name{min-width:170px;font-weight:600}
+    .progress {flex:1;height:12px;background:var(--glass-2);border-radius:8px;overflow:hidden}
+    .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#10b981,#34d399);transition:width .6s ease}
+    .progress.red > i{background:linear-gradient(90deg,#ff7b6b,#ffb199)}
+    .progress.mid > i{background:linear-gradient(90deg,#60a5fa,#7dd3fc)}
+
+    /* ===== Funding blocks ===== */
+    .fund-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .fund-block{padding:12px;border-radius:12px}
+    .fund-block.green{background:linear-gradient(180deg, rgba(16,185,129,0.06), rgba(16,185,129,0.02));border:1px solid rgba(16,185,129,0.08);color:var(--success)}
+    .fund-block.red{background:linear-gradient(180deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.08);color:var(--danger)}
+    .fund-value{font-size:20px;font-weight:800}
+
+    /* ===== Top movers ===== */
+    .movers {display:flex;gap:12px;flex-direction:column}
+    .movers-list{display:flex;flex-direction:column;gap:8px}
+    .mover{
+      display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)
     }
-    .card:hover {
-      transform: translateY(-2px);
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-    .stat {
-      font-size: 1.1rem;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      text-align: center;
-      font-weight: 500;
-    }
-    .green { color: #22c55e; font-weight: 700; }
-    .red { color: #ef4444; font-weight: 700; }
-    footer {
-      text-align: center;
-      font-size: 0.85rem;
-      margin-top: 25px;
-      color: #94a3b8;
-    }
-    .loading-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      margin-left: 6px;
-      border-radius: 50%;
-      background: #38bdf8;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.2; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.2); }
-      100% { opacity: 0.2; transform: scale(0.9); }
+    .mover .left{display:flex;gap:10px;align-items:center}
+    .mover-symbol{font-weight:700;min-width:86px}
+    .mover-change{font-weight:800;padding:6px 10px;border-radius:999px}
+
+    /* extra small column/UI */
+    .meta-box{font-size:13px;color:var(--muted);padding-top:6px}
+    .explain{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.3}
+
+    /* responsive */
+    @media (max-width:980px){
+      main.grid{grid-template-columns:1fr}
+      .meta{text-align:left}
     }
   </style>
 </head>
 <body>
-  <h1>📊 Binance USDT Perpetual Tracker</h1>
-  <p class="updated">
-    Last Updated (Davao City): <span id="lastUpdated">--:--:--</span>
-    <span class="loading-dot"></span>
-  </p>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">USDT</div>
+        <div>
+          <h1>Binance USDT Perpetual Tracker</h1>
+          <div class="subtitle">Live market bias, funding signals & top movers — USDT perpetual pairs only</div>
+        </div>
+      </div>
 
-  <div class="card">
-    <h2>🧮 General Market Bias</h2>
-    <div class="grid">
-      <div class="stat">✅ Green: <span id="green" class="green">0</span></div>
-      <div class="stat">❌ Red: <span id="red" class="red">0</span></div>
-    </div>
+      <div class="meta">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">
+          <div class="pill" id="refreshPill">Auto-refresh: <strong style="margin-left:6px">60s</strong> <span class="refresh-dot" id="refreshDot"></span></div>
+        </div>
+        <div class="meta-box">Last Updated (Davao City): <strong id="lastUpdated">--:--:--</strong></div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- LEFT: main content -->
+      <section class="left">
+        <!-- Market Summary -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Market Summary</div>
+              <div class="card-sub">Counts, percentages and distribution of USDT perpetual pairs</div>
+            </div>
+            <div class="card-sub">Data: Binance Futures API (fapi)</div>
+          </div>
+
+          <div class="summary-row">
+            <div class="summary-stat">
+              <div class="stat-label">General Market Bias</div>
+              <div class="stat-value"><span id="greenCount" style="color:var(--success)">0</span> <span style="color:var(--muted);font-weight:600">Green</span> / <span id="redCount" style="color:var(--danger)">0</span> <span style="color:var(--muted);font-weight:600">Red</span></div>
+              <div class="explain">Green = pairs with 24h price change &gt; 0. Red = pairs with 24h price change &lt; 0.</div>
+            </div>
+
+            <div class="summary-stat">
+              <div class="stat-label">Total USDT Perpetual Pairs</div>
+              <div class="stat-value" id="totalPairs">0</div>
+              <div class="explain">Only symbols ending with <code>USDT</code> are counted (USDT-margined perpetual futures).</div>
+            </div>
+
+            <div class="summary-stat">
+              <div class="stat-label">Green / Red Share</div>
+              <div style="margin-top:6px">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                  <div style="flex:1">
+                    <div style="font-size:12px;color:var(--muted)">Green</div>
+                    <div style="font-weight:800;font-size:14px" id="greenPct">0%</div>
+                  </div>
+                  <div style="width:10px;height:50px;border-radius:8px;background:linear-gradient(180deg,#0f1724,#0b1220)"></div>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center">
+                  <div style="flex:1">
+                    <div style="font-size:12px;color:var(--muted)">Red</div>
+                    <div style="font-weight:800;font-size:14px" id="redPct">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 24h Distribution -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">24h Price Change Distribution</div>
+              <div class="card-sub">Breakdown by percentage movement ranges</div>
+            </div>
+            <div class="card-sub">Buckets: ≥ +5%, ±0–5%, ≤ -5%</div>
+          </div>
+
+          <div class="dist">
+            <div class="dist-row">
+              <div class="dist-name">📈 Price Increase (≥ +5%) <div class="card-sub" style="font-size:12px">Strong winners</div></div>
+              <div class="progress" aria-hidden><i id="barIncrease"></i></div>
+              <div style="width:72px;text-align:right;font-weight:700" id="countIncrease">0</div>
+            </div>
+
+            <div class="dist-row">
+              <div class="dist-name">➖ Mild Movement (±0–5%) <div class="card-sub" style="font-size:12px">Most stable</div></div>
+              <div class="progress mid" aria-hidden><i id="barMild"></i></div>
+              <div style="width:72px;text-align:right;font-weight:700" id="countMild">0</div>
+            </div>
+
+            <div class="dist-row">
+              <div class="dist-name">📉 Price Drop (≤ -5%) <div class="card-sub" style="font-size:12px">Strong losers</div></div>
+              <div class="progress red" aria-hidden><i id="barDrop"></i></div>
+              <div style="width:72px;text-align:right;font-weight:700" id="countDrop">0</div>
+            </div>
+
+            <div class="explain">Tip: large red share + positive funding usually indicates longs are paying shorts (bearish risk). Large green share + negative funding indicates shorts paying longs (bullish potential).</div>
+          </div>
+        </div>
+
+        <!-- Funding Signals -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Funding Signals (Shorts/Longs paying)</div>
+              <div class="card-sub">Funding rates (lastFundingRate) indicate which side is paying</div>
+            </div>
+            <div class="card-sub">Funding positive → longs pay shorts. Funding negative → shorts pay longs.</div>
+          </div>
+
+          <div class="fund-grid">
+            <div class="fund-block green">
+              <div style="font-size:13px;color:var(--muted)">Bullish Potential (Shorts paying)</div>
+              <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+                <div style="flex:1">
+                  <div class="card-sub">Shorts paying &gt; pairs currently up</div>
+                  <div style="margin-top:6px" class="fund-value" id="bullPlus">0</div>
+                </div>
+                <div style="text-align:right;color:var(--muted)"><div>➕</div></div>
+              </div>
+            </div>
+
+            <div class="fund-block green" style="background:rgba(16,185,129,0.03);">
+              <div style="font-size:13px;color:var(--muted)">Bullish Potential (Shorts paying) ➖</div>
+              <div style="margin-top:8px" class="fund-value" id="bullMinus">0</div>
+            </div>
+
+            <div class="fund-block red">
+              <div style="font-size:13px;color:var(--muted)">Bearish Risk (Longs paying)</div>
+              <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+                <div style="flex:1">
+                  <div class="card-sub">Longs paying &gt; pairs currently down</div>
+                  <div style="margin-top:6px" class="fund-value" id="bearPlus">0</div>
+                </div>
+                <div style="text-align:right;color:var(--muted)"><div>➕</div></div>
+              </div>
+            </div>
+
+            <div class="fund-block red" style="background:rgba(239,68,68,0.03);">
+              <div style="font-size:13px;color:var(--muted)">Bearish Risk ➖</div>
+              <div style="margin-top:8px" class="fund-value" id="bearMinus">0</div>
+            </div>
+          </div>
+
+          <div class="explain">Interpretation: <strong>Funding > 0</strong> means longs pay shorts (often bearish). <strong>Funding < 0</strong> means shorts pay longs (often bullish). Use together with price movement for context.</div>
+        </div>
+
+        <!-- Top movers -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Top Movers (24h)</div>
+              <div class="card-sub">Top 5 Gainers & Top 5 Losers (USDT perpetual pairs)</div>
+            </div>
+            <div class="card-sub">Refreshed live</div>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:260px">
+              <div style="font-weight:700;margin-bottom:8px">Top 5 Gainers</div>
+              <div class="movers-list" id="gainersList" aria-live="polite"></div>
+            </div>
+
+            <div style="flex:1;min-width:260px">
+              <div style="font-weight:700;margin-bottom:8px">Top 5 Losers</div>
+              <div class="movers-list" id="losersList" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT: sidebar -->
+      <aside class="right">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Quick Snapshot</div>
+              <div class="card-sub">High-level numbers</div>
+            </div>
+            <div class="card-sub" id="snapshotTime">—</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between">
+              <div class="card-sub">Total Pairs</div><div style="font-weight:800" id="snapTotal">0</div>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <div class="card-sub">Green / Red</div><div style="font-weight:800"><span id="snapGreen">0</span> / <span id="snapRed">0</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <div class="card-sub">Top Gainers Avg</div><div style="font-weight:800" id="snapGAvg">0%</div>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <div class="card-sub">Top Losers Avg</div><div style="font-weight:800" id="snapLAvg">0%</div>
+            </div>
+          </div>
+          <div class="explain">This snapshot is computed from live tickers & funding rates. Refreshes every 60s.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Notes & Legend</div>
+              <div class="card-sub">How to read this dashboard</div>
+            </div>
+          </div>
+          <div class="explain">
+            • <strong>Green / Red:</strong> 24h price change sign.<br>
+            • <strong>Funding ➕ / ➖:</strong> indicates who pays funding this period (longs or shorts).<br>
+            • Use distribution + funding together to spot short-term imbalances (e.g., many red + longs paying = potential pressure from forced liquidations).<br>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Controls</div>
+            <div class="card-sub">Manual actions</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="refreshBtn" style="flex:1;padding:10px;border-radius:10px;background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;color:#041024;font-weight:700;cursor:pointer">Refresh Now</button>
+            <button id="pauseBtn" style="flex:1;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);cursor:pointer">Pause Auto-Refresh</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer style="margin-top:18px;color:var(--muted);font-size:13px;text-align:center">
+      Built for quick deployment. Connect to Binance Futures (fapi) — data shown is live (USDT Perpetual).
+    </footer>
   </div>
-
-  <div class="card">
-    <h2>🔄 24h Price Change</h2>
-    <div class="grid">
-      <div class="stat">📈 ≥ 5% Increase: <span id="increase">0</span></div>
-      <div class="stat">➖ ±0–5% Mild: <span id="mild">0</span></div>
-      <div class="stat">📉 ≤ -5% Drop: <span id="drop">0</span></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>⚡ Funding Signals</h2>
-    <div class="grid">
-      <div class="stat">📈 Bullish ➕: <span id="bullPlus">0</span></div>
-      <div class="stat">📈 Bullish ➖: <span id="bullMinus">0</span></div>
-      <div class="stat">📉 Bearish ➕: <span id="bearPlus">0</span></div>
-      <div class="stat">📉 Bearish ➖: <span id="bearMinus">0</span></div>
-    </div>
-  </div>
-
-  <footer>
-    ⏳ Auto-updates every 60s from Binance Futures API
-  </footer>
 
   <script>
-    async function fetchData() {
-      try {
-        const [tickerRes, fundingRes] = await Promise.all([
-          fetch("https://fapi.binance.com/fapi/v1/ticker/24hr"),
-          fetch("https://fapi.binance.com/fapi/v1/premiumIndex")
-        ]);
-        const tickers = await tickerRes.json();
-        const funding = await fundingRes.json();
+    /**********************************************************************
+     * Live Binance USDT Perpetual Tracker
+     * - Fetches: /fapi/v1/ticker/24hr  and  /fapi/v1/premiumIndex
+     * - Filters symbols ending with "USDT"
+     * - Computes counts, percentages, funding splits, top movers
+     * - Auto-refresh every 60s (configurable)
+     **********************************************************************/
+    (function(){
+      const REFRESH_INTERVAL = 60 * 1000; // 60s
+      let autoRefresh = true;
+      let refreshTimer = null;
 
-        const usdtTickers = tickers.filter(t => t.symbol.endsWith("USDT"));
-        const usdtFunding = funding.filter(f => f.symbol.endsWith("USDT"));
+      // DOM elements
+      const lastUpdatedEl = document.getElementById('lastUpdated');
+      const refreshDot = document.getElementById('refreshDot');
+      const totalPairsEl = document.getElementById('totalPairs');
+      const greenCountEl = document.getElementById('greenCount');
+      const redCountEl = document.getElementById('redCount');
+      const greenPctEl = document.getElementById('greenPct');
+      const redPctEl = document.getElementById('redPct');
+      const barIncrease = document.getElementById('barIncrease');
+      const barMild = document.getElementById('barMild');
+      const barDrop = document.getElementById('barDrop');
+      const countIncrease = document.getElementById('countIncrease');
+      const countMild = document.getElementById('countMild');
+      const countDrop = document.getElementById('countDrop');
+      const bullPlusEl = document.getElementById('bullPlus');
+      const bullMinusEl = document.getElementById('bullMinus');
+      const bearPlusEl = document.getElementById('bearPlus');
+      const bearMinusEl = document.getElementById('bearMinus');
+      const gainersList = document.getElementById('gainersList');
+      const losersList = document.getElementById('losersList');
+      const snapTotal = document.getElementById('snapTotal');
+      const snapGreen = document.getElementById('snapGreen');
+      const snapRed = document.getElementById('snapRed');
+      const snapGAvg = document.getElementById('snapGAvg');
+      const snapLAvg = document.getElementById('snapLAvg');
+      const snapshotTime = document.getElementById('snapshotTime');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
 
-        let green = 0, red = 0;
-        let increase = 0, mild = 0, drop = 0;
-        let bullPlus = 0, bullMinus = 0;
-        let bearPlus = 0, bearMinus = 0;
-
-        usdtTickers.forEach(t => {
-          const change = parseFloat(t.priceChangePercent);
-          if (change > 0) green++; else if (change < 0) red++;
-          if (change >= 5) increase++;
-          else if (change <= -5) drop++;
-          else mild++;
-        });
-
-        usdtFunding.forEach(f => {
-          const rate = parseFloat(f.lastFundingRate);
-          const change = parseFloat(
-            usdtTickers.find(t => t.symbol === f.symbol)?.priceChangePercent || 0
-          );
-          if (rate < 0) {
-            if (change > 0) bullPlus++; else bullMinus++;
-          } else if (rate > 0) {
-            if (change < 0) bearPlus++; else bearMinus++;
-          }
-        });
-
-        document.getElementById("lastUpdated").innerText =
-          new Date().toLocaleTimeString("en-PH", { hour12: true });
-        document.getElementById("green").innerText = green;
-        document.getElementById("red").innerText = red;
-        document.getElementById("increase").innerText = increase;
-        document.getElementById("mild").innerText = mild;
-        document.getElementById("drop").innerText = drop;
-        document.getElementById("bullPlus").innerText = bullPlus;
-        document.getElementById("bullMinus").innerText = bullMinus;
-        document.getElementById("bearPlus").innerText = bearPlus;
-        document.getElementById("bearMinus").innerText = bearMinus;
-      } catch (err) {
-        console.error("Error fetching data:", err);
+      // helper: percent format
+      function fmtPct(n){ return (Math.round(n*100)/100).toFixed(2) + '%'; }
+      function toLocalTime(){ // Davao City timezone display (Philippines - no DST)
+        try {
+          return new Date().toLocaleTimeString('en-PH', { hour12: true });
+        } catch(e){
+          return new Date().toLocaleTimeString();
+        }
       }
-    }
 
-    fetchData();
-    setInterval(fetchData, 60000);
+      // helper: safe number parse
+      function toNum(v){ const n = Number(v); return isFinite(n) ? n : 0; }
+
+      // draw progress bars widths safely
+      function setBar(el, value, total){
+        const pct = total ? Math.max(0, Math.min(100, (value/total)*100)) : 0;
+        el.style.width = pct + '%';
+      }
+
+      // render top movers list (array of objects {symbol, priceChangePercent, lastPrice})
+      function renderMovers(container, items, positive){
+        container.innerHTML = '';
+        items.forEach(it=>{
+          const row = document.createElement('div'); row.className = 'mover';
+          const left = document.createElement('div'); left.className = 'left';
+          const sym = document.createElement('div'); sym.className = 'mover-symbol'; sym.textContent = it.symbol;
+          const price = document.createElement('div'); price.className = 'card-sub'; price.style.color = 'var(--muted)'; price.textContent = 'Price: ' + Number(it.lastPrice).toLocaleString();
+          left.appendChild(sym); left.appendChild(price);
+          const right = document.createElement('div'); right.style.display='flex'; right.style.alignItems='center'; right.style.gap='8px';
+          const change = document.createElement('div'); change.className = 'mover-change';
+          change.textContent = (Number(it.priceChangePercent).toFixed(2) + '%');
+          change.style.background = positive ? 'linear-gradient(90deg,#16c784,#34d399)' : 'linear-gradient(90deg,#ff7b6b,#ffb199)';
+          change.style.color = '#041024'; change.style.fontWeight='800';
+          right.appendChild(change);
+          row.appendChild(left); row.appendChild(right);
+          container.appendChild(row);
+        });
+      }
+
+      // main data fetch + compute + render
+      async function updateNow(){
+        // show that we are fetching (update time immediately)
+        lastUpdatedEl.textContent = toLocalTime();
+        snapshotTime.textContent = new Date().toLocaleString();
+
+        try {
+          const [tickerRes, fundingRes] = await Promise.all([
+            fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'),
+            fetch('https://fapi.binance.com/fapi/v1/premiumIndex')
+          ]);
+
+          if(!tickerRes.ok || !fundingRes.ok){
+            throw new Error('Failed to fetch from Binance APIs');
+          }
+
+          const tickers = await tickerRes.json();
+          const fundings = await fundingRes.json();
+
+          // only USDT perpetuals
+          const usdtTickers = tickers.filter(t => typeof t.symbol === 'string' && t.symbol.endsWith('USDT'));
+          const usdtFundings = fundings.filter(f => typeof f.symbol === 'string' && f.symbol.endsWith('USDT'));
+
+          // totals & buckets
+          let total = usdtTickers.length;
+          let green = 0, red = 0;
+          let increase = 0, mild = 0, drop = 0;
+
+          // compute arrays for movers
+          const movers = usdtTickers.map(t => ({
+            symbol: t.symbol,
+            priceChangePercent: toNum(t.priceChangePercent),
+            lastPrice: toNum(t.lastPrice)
+          }));
+
+          movers.forEach(m=>{
+            const ch = m.priceChangePercent;
+            if(ch > 0) green++; else if(ch < 0) red++;
+            if(ch >= 5) increase++;
+            else if(ch <= -5) drop++;
+            else mild++;
+          });
+
+          // funding analysis:
+          // funding.lastFundingRate positive => longs pay shorts (bearish)
+          // funding.lastFundingRate negative => shorts pay longs (bullish)
+          let bullPlus = 0, bullMinus = 0, bearPlus = 0, bearMinus = 0;
+
+          // convert funding to map for quick lookup
+          const fundingMap = new Map(usdtFundings.map(f => [f.symbol, f]));
+          usdtTickers.forEach(t=>{
+            const f = fundingMap.get(t.symbol);
+            if(!f) return;
+            const rate = toNum(f.lastFundingRate);
+            const change = toNum(t.priceChangePercent);
+            if(rate < 0){
+              // shorts pay longs => bullish potential
+              if(change > 0) bullPlus++; else bullMinus++;
+            } else if(rate > 0){
+              // longs pay shorts => bearish risk
+              if(change < 0) bearPlus++; else bearMinus++;
+            }
+          });
+
+          // top movers
+          const sortedDesc = [...movers].sort((a,b)=>b.priceChangePercent - a.priceChangePercent);
+          const sortedAsc = [...movers].sort((a,b)=>a.priceChangePercent - b.priceChangePercent);
+          const topGainers = sortedDesc.slice(0,5);
+          const topLosers = sortedAsc.slice(0,5);
+
+          // averages for snapshot
+          const gAvg = topGainers.length ? (topGainers.reduce((s,x)=>s + x.priceChangePercent,0) / topGainers.length) : 0;
+          const lAvg = topLosers.length ? (topLosers.reduce((s,x)=>s + x.priceChangePercent,0) / topLosers.length) : 0;
+
+          // render counts & percentages
+          totalPairsEl.textContent = total;
+          greenCountEl.textContent = green;
+          redCountEl.textContent = red;
+          greenPctEl.textContent = total ? ((green/total)*100).toFixed(2) + '%' : '0%';
+          redPctEl.textContent = total ? ((red/total)*100).toFixed(2) + '%' : '0%';
+
+          // progress bars for distributions (use counts)
+          setBar(barIncrease, increase, total);
+          setBar(barMild, mild, total);
+          setBar(barDrop, drop, total);
+          countIncrease.textContent = increase;
+          countMild.textContent = mild;
+          countDrop.textContent = drop;
+
+          // funding values
+          bullPlusEl.textContent = bullPlus;
+          bullMinusEl.textContent = bullMinus;
+          bearPlusEl.textContent = bearPlus;
+          bearMinusEl.textContent = bearMinus;
+
+          // movers
+          renderMovers(gainersList, topGainers, true);
+          renderMovers(losersList, topLosers, false);
+
+          // snapshot
+          snapTotal.textContent = total;
+          snapGreen.textContent = green;
+          snapRed.textContent = red;
+          snapGAvg.textContent = gAvg.toFixed(2) + '%';
+          snapLAvg.textContent = lAvg.toFixed(2) + '%';
+
+          // update small UI texts
+          snapshotTime.textContent = 'Updated: ' + toLocalTime();
+
+          // success indicator (pulse)
+          refreshDot.style.opacity = '1';
+
+        } catch (err){
+          console.error('Update failed:', err);
+          // show error state in small ways
+          lastUpdatedEl.textContent = 'Error fetching data';
+          snapshotTime.textContent = 'Error fetching';
+          refreshDot.style.opacity = '0.2';
+        }
+      }
+
+      // auto-refresh handling
+      function startAutoRefresh(){
+        if(refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(()=>{ if(autoRefresh) updateNow(); }, REFRESH_INTERVAL);
+      }
+
+      // manual controls
+      refreshBtn.addEventListener('click', ()=>{
+        updateNow();
+      });
+      pauseBtn.addEventListener('click', ()=>{
+        autoRefresh = !autoRefresh;
+        pauseBtn.textContent = autoRefresh ? 'Pause Auto-Refresh' : 'Resume Auto-Refresh';
+        if(!autoRefresh){
+          refreshDot.style.opacity = '0.2';
+        } else {
+          refreshDot.style.opacity = '1';
+        }
+      });
+
+      // on first load
+      updateNow();
+      startAutoRefresh();
+
+      // expose for debugging if needed
+      window._tracker = { updateNow, startAutoRefresh, stop: ()=>{ if(refreshTimer) clearInterval(refreshTimer); } };
+    })();
   </script>
 </body>
 </html>
