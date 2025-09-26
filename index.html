@@ -140,6 +140,13 @@
   font-size: 0.9em;
   opacity: 0.7;
   }
+    .status-dot {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.status-dot.green { color: #22c55e; }  /* Success */
+.status-dot.red { color: #ef4444; }    /* Error */
+.status-dot.gray { color: #9ca3af; }   /* Neutral */
   </style>
 </head>
 <body>
@@ -386,6 +393,11 @@
       </ul>
     </div>
 
+    <div class="footer-health">
+  <h4>📡 API Health</h4>
+  <p>Status: <span id="apiHealth" class="status-dot gray">●</span> <span id="apiMessage">Checking...</span></p>
+    </div>
+
     <div class="footer-resources">
   <h4>🔗 Resources</h4>
   <ul>
@@ -508,6 +520,11 @@
           const tickers = await tickerRes.json();
           const fundings = await fundingRes.json();
 
+            // ✅ API success
+    apiHealthEl.className = "status-dot green";
+    apiMessageEl.textContent = "Healthy";
+          
+
           // only USDT perpetuals
           const usdtTickers = tickers.filter(t => typeof t.symbol === 'string' && t.symbol.endsWith('USDT'));
           const usdtFundings = fundings.filter(f => typeof f.symbol === 'string' && f.symbol.endsWith('USDT'));
@@ -607,6 +624,8 @@
           lastUpdatedEl.textContent = 'Error fetching data';
           snapshotTime.textContent = 'Error fetching';
           refreshDot.style.opacity = '0.2';
+             apiHealthEl.className = "status-dot red";
+    apiMessageEl.textContent = "API Error";
         }
       }
 
