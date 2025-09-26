@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Sentiment App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React + ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Recharts CDN -->
+  <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="root" class="p-4"></div>
+
+  <script>
+    const { useState, useEffect } = React;
+    const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } = Recharts;
+
+    // Dummy data for demo
+    const marketAnalysis = {
+      overallMarketOutlook: { score: 7.8, tone: "Bullish", strategySuggestion: "Long-term hold" },
+      generalBias: { score: 6.5, rating: "Good", interpretation: "Positive bias overall" },
+      fundingImbalance: { score: 5.2, rating: "Moderate", interpretation: "Diverging funding rates" },
+      shortSqueezeCandidates: { score: 7.1, rating: "Strong", interpretation: "High short squeeze potential" },
+      longTrapCandidates: { score: 4.5, rating: "Moderate", interpretation: "Possible long trap" },
+      volumeSentiment: { score: 6.0, rating: "Good", interpretation: "High buying volume" },
+      liquidationHeatmap: { score: 3.8, rating: "Weak", interpretation: "Some liquidation risk" },
+      newsSentiment: { score: 6.2, rating: "Good", interpretation: "Mostly positive news", topHeadlines: ["Market rises 5%", "Funding rates spike"] },
+      actionableSentimentSummary: { score: 7.0, bullishCount: 3, bearishCount: 1, interpretation: "Focus on bullish setups" },
+    };
+
+    const fundingImbalanceData = {
+      topShortSqueeze: [{ symbol: "BTCUSDT", fundingRate: 0.0005, priceChangePercent: 2.3, volume: 123456789 }],
+      topLongTrap: [{ symbol: "ETHUSDT", fundingRate: -0.0004, priceChangePercent: -1.5, volume: 98765432 }],
+    };
+
+    function formatVolume(num) {
+      if (num === 0) return "0";
+      return Intl.NumberFormat("en-US", { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }).format(num);
+    }
+
+    function CustomBarLabel({ x, y, width, height, value }) {
+      const displayY = y - (value < 0 ? height : 0) - 5;
+      let textColor = '#fff';
+      if (value >= 7.5) textColor = '#4ade80';
+      else if (value >= 6) textColor = '#facc15';
+      else if (value >= 4) textColor = '#f97316';
+      else textColor = '#f87171';
+      return React.createElement("text", {
+        x: x + width/2, y: displayY, fill: textColor, textAnchor: "middle", fontSize: 12, fontWeight: "bold"
+      }, value.toFixed(1));
+    }
+
+    function App() {
+      const sentimentScores = [
+        { name: 'Bias', score: marketAnalysis.generalBias.score },
+        { name: 'Funding', score: marketAnalysis.fundingImbalance.score },
+        { name: 'Squeeze', score: marketAnalysis.shortSqueezeCandidates.score },
+        { name: 'Long Trap', score: marketAnalysis.longTrapCandidates.score },
+        { name: 'Volume', score: marketAnalysis.volumeSentiment.score },
+        { name: 'Liquidation', score: marketAnalysis.liquidationHeatmap.score },
+        { name: 'News', score: marketAnalysis.newsSentiment.score },
+        { name: 'Actionable', score: marketAnalysis.actionableSentimentSummary.score },
+      ];
+
+      const getScoreColor = score => {
+        if (score >= 7.5) return "text-green-400";
+        if (score >= 6) return "text-yellow-400";
+        if (score >= 4) return "text-orange-400";
+        return "text-red-400";
+      };
+
+      return React.createElement("div", null,
+        React.createElement("h1", { className: "text-xl font-bold mb-4" }, "🧠 Market Sentiment Analysis"),
+        React.createElement("p", { className: "mb-4" }, 
+          "Overall Market: ",
+          React.createElement("span", { className: getScoreColor(marketAnalysis.overallMarketOutlook.score) }, 
+            `${marketAnalysis.overallMarketOutlook.tone} (${marketAnalysis.overallMarketOutlook.score.toFixed(1)})`
+          )
+        ),
+        React.createElement("div", { style: { width: "100%", height: 300 } },
+          React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
+            React.createElement(BarChart, { data: sentimentScores },
+              React.createElement(XAxis, { dataKey: "name" }),
+              React.createElement(YAxis, { domain: [0, 10] }),
+              React.createElement(Tooltip, null),
+              React.createElement(Bar, { dataKey: "score", label: React.createElement(CustomBarLabel) },
+                sentimentScores.map((entry, index) => React.createElement(Cell, {
+                  key: index,
+                  fill: entry.score >= 7.5 ? "#4ade80" : entry.score >= 6 ? "#facc15" : entry.score >= 4 ? "#f97316" : "#f87171"
+                }))
+              )
+            )
+          )
+        ),
+        React.createElement("div", { className: "mt-4" },
+          React.createElement("h2", { className: "font-semibold" }, "Top Short Squeeze Candidates"),
+          React.createElement("ul", null, fundingImbalanceData.topShortSqueeze.map(d =>
+            React.createElement("li", { key: d.symbol },
+              `${d.symbol} — Funding: ${(d.fundingRate*100).toFixed(4)}%, Change: ${d.priceChangePercent.toFixed(2)}%, Volume: ${formatVolume(d.volume)}`
+            )
+          ))
+        ),
+        React.createElement("div", { className: "mt-4" },
+          React.createElement("h2", { className: "font-semibold" }, "Top Long Trap Candidates"),
+          React.createElement("ul", null, fundingImbalanceData.topLongTrap.map(d =>
+            React.createElement("li", { key: d.symbol },
+              `${d.symbol} — Funding: ${(d.fundingRate*100).toFixed(4)}%, Change: ${d.priceChangePercent.toFixed(2)}%, Volume: ${formatVolume(d.volume)}`
+            )
+          ))
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
